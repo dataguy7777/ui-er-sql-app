@@ -1,5 +1,5 @@
 import streamlit as st
-from st_link_analysis import st_link_analysis, NodeStyle, EdgeStyle
+from st_link_analysis import st_link_analysis
 
 st.set_page_config(layout="wide")
 st.title("Linked Cubes Visualization")
@@ -11,33 +11,31 @@ nodes = [
     {"id": "Cube_OtherFramework", "label": "Some matching cube from other Framework"}
 ]
 
-# Define edges (links) between cubes
-# For example, link AssetBackedSecurity to SecurityExchange, and SecurityExchange to OtherFramework
+# Define edges
 edges = [
     {"source": "Cube_AssetBackedSecurity", "target": "Cube_SecurityExchange"},
     {"source": "Cube_SecurityExchange", "target": "Cube_OtherFramework"}
 ]
 
-# Define node style
-node_style = NodeStyle(
-    color="#f0f0f0",
-    border_color="#666666",
-    shape="box3d",
-    font_color="#000000",
-    font_size=12
-)
+# Try using dictionaries for styles if NodeStyle and EdgeStyle classes cause errors
+node_style = {
+    "color": "#f0f0f0",
+    "border_color": "#666666",
+    "shape": "box",
+    "font_color": "#000000",
+    "font_size": 12
+}
 
-# Define edge style
-edge_style = EdgeStyle(
-    color="#0078d4",
-    width=2,
-    directed=False  # Set to True if you want arrows
-)
+edge_style = {
+    "color": "#0078d4",
+    "width": 2,
+    "directed": False
+}
 
 st.subheader("Cubes Network")
 st.write("This network graph shows multiple cubes and their links.")
 
-# Display the link analysis visualization
+# Pass the dictionaries directly
 st_link_analysis(nodes, edges, node_style=node_style, edge_style=edge_style, height=600, width=1000)
 
 st.markdown("""
