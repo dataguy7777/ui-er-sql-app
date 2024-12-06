@@ -1,2 +1,2 @@
 streamlit
-snowflake-snowpark-python
+st_link_analysis 
