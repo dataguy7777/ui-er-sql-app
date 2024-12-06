@@ -38,9 +38,33 @@ elements = {
         }
     ],
     "edges": [
-        {"data": {"id": "e1", "label": "ACCOUNTS->CUSTOMERS", "source": "ACCOUNTS", "target": "CUSTOMERS"}},
-        {"data": {"id": "e2", "label": "ACCOUNTS->BRANCHES", "source": "ACCOUNTS", "target": "BRANCHES"}},
-        {"data": {"id": "e3", "label": "TRANSACTIONS->ACCOUNTS", "source": "TRANSACTIONS", "target": "ACCOUNTS"}}
+        {
+            "data": {
+                "id": "e1",
+                "label": "ACCOUNTS->CUSTOMERS",
+                "relationship": "Each account belongs to a customer",
+                "source": "ACCOUNTS",
+                "target": "CUSTOMERS"
+            }
+        },
+        {
+            "data": {
+                "id": "e2",
+                "label": "ACCOUNTS->BRANCHES",
+                "relationship": "Each account is opened at a branch",
+                "source": "ACCOUNTS",
+                "target": "BRANCHES"
+            }
+        },
+        {
+            "data": {
+                "id": "e3",
+                "label": "TRANSACTIONS->ACCOUNTS",
+                "relationship": "Each transaction is tied to an account",
+                "source": "TRANSACTIONS",
+                "target": "ACCOUNTS"
+            }
+        }
     ]
 }
 
@@ -56,9 +80,9 @@ node_styles = [
 # Define edge styles using positional arguments
 # EdgeStyle(type, color, caption_attribute, directed)
 edge_styles = [
-    EdgeStyle("RELATION", "#808080", "label", True),
-    EdgeStyle("RELATION", "#808080", "label", True),
-    EdgeStyle("RELATION", "#808080", "label", True)
+    EdgeStyle("RELATION", "#808080", "relationship", True),
+    EdgeStyle("RELATION", "#808080", "relationship", True),
+    EdgeStyle("RELATION", "#808080", "relationship", True)
 ]
 
 # Define layout settings
