@@ -1,7 +1,7 @@
 import streamlit as st
 import networkx as nx
 from pyvis.network import Network
-from streamlit.components.v1 import components
+from streamlit.components.v1 import html
 import tempfile
 
 # Set the page configuration to use a wide layout
@@ -20,7 +20,7 @@ nodes = [
     {
         "id": "CUSTOMERS",
         "label": "CUSTOMERS",
-        "title": "customer_id (PK)\nname\email",
+        "title": "customer_id (PK)\nname\nemail",
         "group": "CUSTOMERS"
     },
     {
@@ -95,8 +95,12 @@ with tempfile.NamedTemporaryFile('w', delete=False, suffix='.html') as tmp_file:
     net.save_graph(tmp_file.name)
     net_path = tmp_file.name
 
+# Read the HTML content
+with open(net_path, 'r') as f:
+    graph_html = f.read()
+
 # Display the network graph in Streamlit
-components.html(open(net_path, 'r').read(), height=600, width=1000, scrolling=True)
+html(graph_html, height=600, width=1000, scrolling=True)
 
 # Provide detailed schema information below the graph
 st.markdown("""
