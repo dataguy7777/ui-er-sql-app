@@ -350,18 +350,55 @@ def createGraph(tables, theme, showColumns, showTypes, useUpperCase):
 
 
 def getSession():
+    """
+    Attempts to return an active Snowpark session. 
+    If no active session is found, it tries to parse the ~/.snowsql/config file 
+    to create a new session with credentials.
+
+    Returns:
+        snowflake.snowpark.Session: A Snowflake session object.
+
+    Raises:
+        RuntimeError: If the required configuration section is not found in the file 
+                      and no active session can be established.
+    """
     try:
         return get_active_session()
-    except:
-        parser = configparser.ConfigParser()
-        parser.read(os.path.join(os.path.expanduser('~'), ".snowsql/config"))
-        section = "connections.my_conn"
-        pars = {
-            "account": parser.get(section, "accountname"),
-            "user": parser.get(section, "username"),
-            "password": parser.get(section, "password")
-        }
+    except Exception as e:
+        st.warning("No active Snowpark session found. Attempting to create one from config...")
+
+    parser = configparser.ConfigParser()
+    config_file_path = os.path.join(os.path.expanduser('~'), ".snowsql", "config")
+
+    if not os.path.isfile(config_file_path):
+        raise RuntimeError(
+            f"Could not find SnowSQL configuration file at {config_file_path}. "
+            "Please ensure you have the required configuration or provide credentials in another manner."
+        )
+
+    parser.read(config_file_path)
+    section = "connections.my_conn"
+    if not parser.has_section(section):
+        # Handle gracefully: either ask user to provide credentials or raise an error
+        raise RuntimeError(
+            f"Required configuration section '{section}' not found in {config_file_path}. "
+            "Please ensure that this section exists or update your credentials."
+        )
+
+    # If section is found, proceed to create session
+    pars = {
+        "account": parser.get(section, "accountname"),
+        "user": parser.get(section, "username"),
+        "password": parser.get(section, "password")
+    }
+
+    try:
         return Session.builder.configs(pars).create()
+    except Exception as e:
+        raise RuntimeError(
+            "Failed to create a Snowpark session from the provided configuration. "
+            f"Details: {str(e)}"
+        ) from e
 
 
 def getThemes():
