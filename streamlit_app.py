@@ -2,37 +2,56 @@ import streamlit as st
 from st_link_analysis import st_link_analysis, NodeStyle, EdgeStyle
 
 st.set_page_config(layout="wide")
+st.title("Linked Cubes Visualization")
 
-# Sample Data
-elements = {
-    "nodes": [
-        {"data": {"id": 1, "label": "PERSON", "name": "Streamlit"}},
-        {"data": {"id": 2, "label": "PERSON", "name": "Hello"}},
-        {"data": {"id": 3, "label": "PERSON", "name": "World"}},
-        {"data": {"id": 4, "label": "POST", "content": "x"}},
-        {"data": {"id": 5, "label": "POST", "content": "y"}},
-    ],
-    "edges": [
-        {"data": {"id": 6, "label": "FOLLOWS", "source": 1, "target": 2}},
-        {"data": {"id": 7, "label": "FOLLOWS", "source": 2, "target": 3}},
-        {"data": {"id": 8, "label": "POSTED", "source": 3, "target": 4}},
-        {"data": {"id": 9, "label": "POSTED", "source": 1, "target": 5}},
-        {"data": {"id": 10, "label": "QUOTES", "source": 5, "target": 4}},
-    ],
-}
-
-# Style node & edge groups
-node_styles = [
-    NodeStyle("PERSON", "#FF7F3E", "name", "person"),
-    NodeStyle("POST", "#2A629A", "content", "description"),
+# Define cubes as nodes
+nodes = [
+    {"id": "Cube_AssetBackedSecurity", "label": "Asset backed security (BIRD_ABS_ELDM)"},
+    {"id": "Cube_SecurityExchange", "label": "Security and exchange tradable derivative (BIRD_SCRTY_EXCHNG_TRDBL_DRVTV_EIL)"},
+    {"id": "Cube_OtherFramework", "label": "Some matching cube from other Framework"}
 ]
 
-edge_styles = [
-    EdgeStyle("FOLLOWS", caption='label', directed=True),
-    EdgeStyle("POSTED", caption='label', directed=True),
-    EdgeStyle("QUOTES", caption='label', directed=True),
+# Define edges (links) between cubes
+# For example, link AssetBackedSecurity to SecurityExchange, and SecurityExchange to OtherFramework
+edges = [
+    {"source": "Cube_AssetBackedSecurity", "target": "Cube_SecurityExchange"},
+    {"source": "Cube_SecurityExchange", "target": "Cube_OtherFramework"}
 ]
 
-# Render the component
-st.markdown("### st-link-analysis: Example")
-st_link_analysis(elements, "cose", node_styles, edge_styles)
+# Define node style
+node_style = NodeStyle(
+    color="#f0f0f0",
+    border_color="#666666",
+    shape="box3d",
+    font_color="#000000",
+    font_size=12
+)
+
+# Define edge style
+edge_style = EdgeStyle(
+    color="#0078d4",
+    width=2,
+    directed=False  # Set to True if you want arrows
+)
+
+st.subheader("Cubes Network")
+st.write("This network graph shows multiple cubes and their links.")
+
+# Display the link analysis visualization
+st_link_analysis(nodes, edges, node_style=node_style, edge_style=edge_style, height=600, width=1000)
+
+st.markdown("""
+**Cube Details:**
+
+- **Cube: Asset backed security (BIRD_ABS_ELDM)**
+  - Description: A debt security with underlying assets.
+  - Maintained by: SDD team (ECB)
+  - Type of cube: ELDM - Uncommon cube type
+  - Version: 1 (01.07.2023 - 31.12.9999)
+
+- **Cube: Security and exchange tradable derivative (BIRD_SCRTY_EXCHNG_TRDBL_DRVTV_EIL)**
+  - Forward engineered from: Asset backed security (BIRD_ABS_ELDM)
+  
+- **Cube: OtherFramework Cube**
+  - Represents a cube from another framework or domain linking to SecurityExchange cube.
+""")
