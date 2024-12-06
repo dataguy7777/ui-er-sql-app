@@ -1,108 +1,88 @@
 import streamlit as st
-import networkx as nx
-from pyvis.network import Network
-from streamlit.components.v1 import html
-import tempfile
+from st_link_analysis import st_link_analysis, NodeStyle, EdgeStyle
 
 # Set the page configuration to use a wide layout
 st.set_page_config(layout="wide")
 st.title("Bank Database Schema Visualization")
 
-# Define the bank database schema with tables and their relationships
-# Tables:
-#   CUSTOMERS (customer_id PK, name, email)
-#   ACCOUNTS (account_id PK, customer_id FK->CUSTOMERS.customer_id, branch_id FK->BRANCHES.branch_id, balance)
-#   BRANCHES (branch_id PK, branch_name, location)
-#   TRANSACTIONS (transaction_id PK, account_id FK->ACCOUNTS.account_id, amount, tx_date)
-
 # Define nodes representing each table
-nodes = [
-    {
-        "id": "CUSTOMERS",
-        "label": "CUSTOMERS",
-        "title": "customer_id (PK)\nname\nemail",
-        "group": "CUSTOMERS"
-    },
-    {
-        "id": "ACCOUNTS",
-        "label": "ACCOUNTS",
-        "title": "account_id (PK)\ncustomer_id (FK->CUSTOMERS)\nbranch_id (FK->BRANCHES)\nbalance",
-        "group": "ACCOUNTS"
-    },
-    {
-        "id": "BRANCHES",
-        "label": "BRANCHES",
-        "title": "branch_id (PK)\nbranch_name\nlocation",
-        "group": "BRANCHES"
-    },
-    {
-        "id": "TRANSACTIONS",
-        "label": "TRANSACTIONS",
-        "title": "transaction_id (PK)\naccount_id (FK->ACCOUNTS)\namount\ntx_date",
-        "group": "TRANSACTIONS"
-    }
-]
-
-# Define edges representing foreign key relationships
-edges = [
-    {"from": "ACCOUNTS", "to": "CUSTOMERS", "label": "customer_id (FK)"},
-    {"from": "ACCOUNTS", "to": "BRANCHES", "label": "branch_id (FK)"},
-    {"from": "TRANSACTIONS", "to": "ACCOUNTS", "label": "account_id (FK)"}
-]
-
-# Create a NetworkX graph
-G = nx.DiGraph()
-
-# Add nodes to the graph
-for node in nodes:
-    G.add_node(node["id"], label=node["label"], title=node["title"], group=node["group"])
-
-# Add edges to the graph
-for edge in edges:
-    G.add_edge(edge["from"], edge["to"], label=edge["label"])
-
-# Create a PyVis network
-net = Network(height='600px', width='100%', directed=True, bgcolor='#ffffff', font_color='black')
-
-# Set the physics layout of the network
-net.barnes_hut()
-
-# Convert the NetworkX graph to PyVis
-net.from_nx(G)
-
-# Customize the nodes based on their group (table type)
-colors = {
-    "CUSTOMERS": "#FF7F3E",
-    "ACCOUNTS": "#2A629A",
-    "BRANCHES": "#78C850",
-    "TRANSACTIONS": "#F0C674"
+elements = {
+    "nodes": [
+        {
+            "data": {
+                "id": "CUSTOMERS",
+                "label": "CUSTOMERS",
+                "fields": "customer_id (PK)\nname\nemail"
+            }
+        },
+        {
+            "data": {
+                "id": "ACCOUNTS",
+                "label": "ACCOUNTS",
+                "fields": "account_id (PK)\ncustomer_id (FK->CUSTOMERS)\nbranch_id (FK->BRANCHES)\nbalance"
+            }
+        },
+        {
+            "data": {
+                "id": "BRANCHES",
+                "label": "BRANCHES",
+                "fields": "branch_id (PK)\nbranch_name\nlocation"
+            }
+        },
+        {
+            "data": {
+                "id": "TRANSACTIONS",
+                "label": "TRANSACTIONS",
+                "fields": "transaction_id (PK)\naccount_id (FK->ACCOUNTS)\namount\ntx_date"
+            }
+        }
+    ],
+    "edges": [
+        {"data": {"id": "e1", "label": "ACCOUNTS->CUSTOMERS", "source": "ACCOUNTS", "target": "CUSTOMERS"}},
+        {"data": {"id": "e2", "label": "ACCOUNTS->BRANCHES", "source": "ACCOUNTS", "target": "BRANCHES"}},
+        {"data": {"id": "e3", "label": "TRANSACTIONS->ACCOUNTS", "source": "TRANSACTIONS", "target": "ACCOUNTS"}}
+    ]
 }
 
-for node in net.nodes:
-    node["color"] = colors.get(node["group"], "#D3D3D3")  # Default color if group not found
-    node["shape"] = "box"
-    node["font"]["size"] = 14
-    node["font"]["color"] = "#000000"
+# Define node styles using positional arguments
+# NodeStyle(type, color, caption_attribute, shape)
+node_styles = [
+    NodeStyle("CUSTOMERS", "#FF7F3E", "fields", "box"),
+    NodeStyle("ACCOUNTS", "#2A629A", "fields", "box"),
+    NodeStyle("BRANCHES", "#78C850", "fields", "box"),
+    NodeStyle("TRANSACTIONS", "#F0C674", "fields", "box")
+]
 
-# Customize the edges
-for edge in net.edges:
-    edge["color"] = "#0078d4"
-    edge["arrows"] = "to"
-    edge["font"] = {"align": "middle"}
+# Define edge styles using positional arguments
+# EdgeStyle(type, color, caption_attribute, directed)
+edge_styles = [
+    EdgeStyle("RELATION", "#808080", "label", True),
+    EdgeStyle("RELATION", "#808080", "label", True),
+    EdgeStyle("RELATION", "#808080", "label", True)
+]
 
-# Generate the HTML for the network
-with tempfile.NamedTemporaryFile('w', delete=False, suffix='.html') as tmp_file:
-    net.save_graph(tmp_file.name)
-    net_path = tmp_file.name
+# Define layout settings
+layout = {"name": "cose", "animate": "end", "nodeDimensionsIncludeLabels": False}
 
-# Read the HTML content
-with open(net_path, 'r') as f:
-    graph_html = f.read()
+st.subheader("Bank Database Schema Graph")
+st.write("Tables are represented as nodes with their fields. Edges represent foreign key relationships.")
 
-# Display the network graph in Streamlit
-html(graph_html, height=600, width=1000, scrolling=True)
+# Attempt to render the link analysis visualization
+try:
+    st_link_analysis(
+        elements=elements,
+        layout=layout,
+        node_styles=node_styles,
+        edge_styles=edge_styles,
+        key="bank_schema"
+    )
+except TypeError as te:
+    st.error(f"TypeError encountered: {te}")
+except AttributeError as ae:
+    st.error(f"AttributeError encountered: {ae}")
+except Exception as e:
+    st.error(f"An unexpected error occurred: {e}")
 
-# Provide detailed schema information below the graph
 st.markdown("""
 **Schema Details:**
 
