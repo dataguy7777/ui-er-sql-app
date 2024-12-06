@@ -1,3 +1,4 @@
 streamlit
 st_link_analysis 
 networkx 
+pyvis
