@@ -351,54 +351,71 @@ def createGraph(tables, theme, showColumns, showTypes, useUpperCase):
 
 def getSession():
     """
-    Attempts to return an active Snowpark session. 
-    If no active session is found, it tries to parse the ~/.snowsql/config file 
-    to create a new session with credentials.
+    Attempts to return an active Snowpark session.
+    1. Tries to get an active session.
+    2. If no active session is found, tries to parse the ~/.snowsql/config file for credentials.
+    3. If config is missing or incomplete, prompts the user to input their credentials.
 
     Returns:
         snowflake.snowpark.Session: A Snowflake session object.
 
     Raises:
-        RuntimeError: If the required configuration section is not found in the file 
-                      and no active session can be established.
+        RuntimeError: If a session cannot be established even after prompting the user.
     """
+    # Attempt to retrieve an active session
     try:
         return get_active_session()
-    except Exception as e:
-        st.warning("No active Snowpark session found. Attempting to create one from config...")
+    except Exception:
+        st.warning("No active Snowpark session found. Attempting to create one from configuration or user input.")
 
+    # Attempt to parse credentials from config file
     parser = configparser.ConfigParser()
     config_file_path = os.path.join(os.path.expanduser('~'), ".snowsql", "config")
-
-    if not os.path.isfile(config_file_path):
-        raise RuntimeError(
-            f"Could not find SnowSQL configuration file at {config_file_path}. "
-            "Please ensure you have the required configuration or provide credentials in another manner."
-        )
-
-    parser.read(config_file_path)
     section = "connections.my_conn"
-    if not parser.has_section(section):
-        # Handle gracefully: either ask user to provide credentials or raise an error
-        raise RuntimeError(
-            f"Required configuration section '{section}' not found in {config_file_path}. "
-            "Please ensure that this section exists or update your credentials."
-        )
 
-    # If section is found, proceed to create session
-    pars = {
-        "account": parser.get(section, "accountname"),
-        "user": parser.get(section, "username"),
-        "password": parser.get(section, "password")
-    }
+    if os.path.isfile(config_file_path):
+        parser.read(config_file_path)
+        if parser.has_section(section):
+            # Create session from config file
+            pars = {
+                "account": parser.get(section, "accountname"),
+                "user": parser.get(section, "username"),
+                "password": parser.get(section, "password")
+            }
+            try:
+                return Session.builder.configs(pars).create()
+            except Exception as e:
+                st.error("Failed to create a Snowpark session from the provided configuration.")
+                st.error(str(e))
+        else:
+            st.warning(f"Configuration section '{section}' not found in {config_file_path}.")
+    else:
+        st.warning("No SnowSQL configuration file found. Please provide credentials manually.")
 
-    try:
-        return Session.builder.configs(pars).create()
-    except Exception as e:
-        raise RuntimeError(
-            "Failed to create a Snowpark session from the provided configuration. "
-            f"Details: {str(e)}"
-        ) from e
+    # Prompt user for credentials if not found in config
+    st.subheader("Provide Snowflake Credentials")
+    account = st.text_input("Account (e.g. xyz12345.us-east-1)")
+    user = st.text_input("User")
+    password = st.text_input("Password", type="password")
+
+    if st.button("Connect"):
+        if account and user and password:
+            pars = {
+                "account": account,
+                "user": user,
+                "password": password
+            }
+            try:
+                return Session.builder.configs(pars).create()
+            except Exception as e:
+                st.error("Failed to create a Snowpark session with the provided credentials.")
+                st.error(str(e))
+        else:
+            st.error("Please provide all required credentials (account, user, and password).")
+
+    # If we reach here without returning, raise a RuntimeError
+    raise RuntimeError("Unable to establish a Snowpark session. Please provide valid credentials or a proper configuration.")
+
 
 
 def getThemes():
